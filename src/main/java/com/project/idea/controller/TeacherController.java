@@ -6,6 +6,7 @@ import com.project.idea.repository.UserRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/teacher")
@@ -24,7 +25,6 @@ public class TeacherController {
         model.addAttribute("page", "teacher");
         model.addAttribute("students", userRepo.findByRole("ROLE_STUDENT"));
         model.addAttribute("courses", courseRepo.findAll());
-        // Add this line - create a new Course1 object for the form
         model.addAttribute("newCourse", new Course1());
         return "app";
     }
@@ -36,8 +36,17 @@ public class TeacherController {
     }
 
     @PostMapping("/add-course")
-    public String addCourse(@ModelAttribute("newCourse") Course1 course) {
+    public String addCourse(@ModelAttribute("newCourse") Course1 course, RedirectAttributes redirectAttributes) {
+        // Check if course with same ID already exists
+        Course1 existingCourse = courseRepo.findByCourseId(course.getCourseId());
+        if (existingCourse != null) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Course with ID " + course.getCourseId() + " already exists!");
+            return "redirect:/teacher";
+        }
+
         courseRepo.save(course);
+        redirectAttributes.addFlashAttribute("successMessage", "Course added successfully!");
         return "redirect:/teacher";
     }
 }
